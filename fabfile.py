@@ -42,11 +42,12 @@ def installNginx():
 
 @task
 def installLogstash():
-    updateRepo()
-    run("sudo apt-get install logstash")
-    run("cd /etc/pki/tls; sudo openssl req -subj '/CN=elkpri.itmanaged.solutions/' -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout private/logstash-forwarder.key -out certs/logstash-forwarder.crt")
+    # run("sudo apt-get install logstash")
+    # run("cd /etc/pki/tls; sudo openssl req -subj '/CN=elkpri.itmanaged.solutions/' -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout private/logstash-forwarder.key -out certs/logstash-forwarder.crt")
+    put("./genSSLLogstash.sh",".")
+    run("")
     get("/etc/logstash/conf.d/02-beats-input.conf", ".", use_sudo=True)
-    
+
 
 
 
