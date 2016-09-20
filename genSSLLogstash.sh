@@ -1,5 +1,6 @@
 
-
+sudo mkdir -p /etc/pki/tls/certs
+sudo mkdir /etc/pki/tls/private
 cd /etc/pki/tls
 sudo openssl req -subj '/CN=ELK_server_fqdn/' \
                 -x509 \

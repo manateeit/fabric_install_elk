@@ -42,14 +42,29 @@ def installNginx():
 
 @task
 def installLogstash():
-    # run("sudo apt-get install logstash")
-    # run("cd /etc/pki/tls; sudo openssl req -subj '/CN=elkpri.itmanaged.solutions/' -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout private/logstash-forwarder.key -out certs/logstash-forwarder.crt")
+    run("sudo apt-get install logstash")
     put("./genSSLLogstash.sh",".")
-    run("")
-    get("/etc/logstash/conf.d/02-beats-input.conf", ".", use_sudo=True)
+    run("chmod +x ./genSSLLogstash.sh")
+    run("./genSSLLogstash.sh")
+    put("./02-beats-input.conf" , "/etc/logstash/conf.d/02-beats-input.conf", use_sudo=True)
+    put("./10-syslog-filter.conf" , "/etc/logstash/conf.d/10-syslog-filter.conf", use_sudo=True)
+    put("./30-elasticsearch-output.conf", "/etc/logstash/conf.d/30-elasticsearch-output.conf", use_sudo=True)
+    run("sudo service logstash configtest")
+    time.sleep(2)
+    run("sudo service logstash restart")
+    time.sleep(2)
+    run("sudo update-rc.d logstash defaults 96 9")
 
 
-
+@task
+def loadKibanaDashboards():
+    run("curl -L -O https://download.elastic.co/beats/dashboards/beats-dashboards-1.1.0.zip")
+    run("sudo apt-get install -y unzip")
+    run("unzip beats-dashboards-*.zip")
+    run("cd beats-dashboards-* && ./load.sh")
+    run("curl -O https://gist.githubusercontent.com/thisismitch/3429023e8438cc25b86c/raw/d8c479e2a1adcea8b1fe86570e42abab0f10f364/filebeat-index-template.json")
+    run("curl -XPUT 'http://localhost:9200/_template/filebeat?pretty' -d@filebeat-index-template.json")
+    
 
 @task
 def restartElasticSearch():
