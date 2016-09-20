@@ -18,7 +18,6 @@ def updateRepo():
     run("echo 'deb http://packages.elastic.co/logstash/2.2/debian stable main' | sudo tee /etc/apt/sources.list.d/logstash-2.2.x.list")
     run("sudo apt-get update")
 
-
 @task
 def installElasticSearch():
     run("sudo apt-get -y install elasticsearch")
@@ -66,6 +65,39 @@ def loadKibanaDashboards():
     run("cd beats-dashboards-* && ./load.sh")
     run("curl -O https://gist.githubusercontent.com/thisismitch/3429023e8438cc25b86c/raw/d8c479e2a1adcea8b1fe86570e42abab0f10f364/filebeat-index-template.json")
     run("curl -XPUT 'http://localhost:9200/_template/filebeat?pretty' -d@filebeat-index-template.json")
+
+
+@task
+def installFileBeats():
+    put("./logstash-forwarder.crt","/tmp")
+    run("sudo mkdir -p /etc/pki/tls/certs")
+    run("sudo cp /tmp/logstash-forwarder.crt /etc/pki/tls/certs/")
+    run('echo "deb https://packages.elastic.co/beats/apt stable main" |  sudo tee -a /etc/apt/sources.list.d/beats.list')
+    run("wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -")
+    run("sudo apt-get update")
+    run("sudo apt-get install -y filebeat")
+    
+
+@task
+def installLogstachFilters():
+    put("./12-apache.conf","/etc/logstash/conf.d/", use_sudo=True)
+    put("./11-nginx-filter.conf","/etc/logstash/conf.d/", use_sudo=True)
+    run("sudo service logstash restart")
+
+@task
+def configureFileBeats(type):
+    if type == 'nginx':
+        filebeatFile = "./filebeat.nginx.yml"
+    if type == 'apache':
+        filebeatFile = "./filebeat.apache2.yml"
+    put(filebeatFile, "/etc/filebeat/filebeat.yml", use_sudo=True)
+    run("sudo service filebeat restart")
+
+
+@task
+def updateElasticSearchYml:
+    put("./elasticsearch.yml", "/etc/elasticsearch/elasticsearch.yml", use_sudo=True)
+
 
 
 @task
@@ -118,5 +150,8 @@ def startNginx():
       run("sudo service nginx start")
 
 
+@task
+def checkFileBeat():
+    run("curl -XGET 'http://elkpri.itmanaged.solutions:9200/filebeat-*/_search?pretty'")
 
 
