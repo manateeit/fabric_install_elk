@@ -12,9 +12,9 @@ def installJava8():
 
 @task
 def updateRepo():
-    # run("wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -")
-    # run('echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list')
-    # run('echo "deb http://packages.elastic.co/kibana/4.4/debian stable main" | sudo tee -a /etc/apt/sources.list.d/kibana-4.4.x.list')
+    run("wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -")
+    run('echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list')
+    run('echo "deb http://packages.elastic.co/kibana/4.4/debian stable main" | sudo tee -a /etc/apt/sources.list.d/kibana-4.4.x.list')
     run("echo 'deb http://packages.elastic.co/logstash/2.2/debian stable main' | sudo tee /etc/apt/sources.list.d/logstash-2.2.x.list")
     run("sudo apt-get update")
 
@@ -54,6 +54,8 @@ def installLogstash():
     run("sudo service logstash restart")
     time.sleep(2)
     run("sudo update-rc.d logstash defaults 96 9")
+    get("/etc/pki/tls/certs/logstash-forwarder.crt", ".", use_sudo=True)
+
 
 
 @task
@@ -64,7 +66,7 @@ def loadKibanaDashboards():
     run("cd beats-dashboards-* && ./load.sh")
     run("curl -O https://gist.githubusercontent.com/thisismitch/3429023e8438cc25b86c/raw/d8c479e2a1adcea8b1fe86570e42abab0f10f364/filebeat-index-template.json")
     run("curl -XPUT 'http://localhost:9200/_template/filebeat?pretty' -d@filebeat-index-template.json")
-    
+
 
 @task
 def restartElasticSearch():
